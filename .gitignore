@@ -20,3 +20,6 @@ dist/
 .DS_Store
 .idea/
 .vscode/
+
+# personal learning notes — not for the public repo
+LEARNING_NOTES.md

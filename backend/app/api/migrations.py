@@ -1,30 +1,22 @@
-"""Migration endpoints.
 
-The routes, response models, and the session dependency are set up. Fill in the
-handler bodies.
-
-Nudges:
-  - `POST /migrations`: create a Migration row, then enqueue an ARQ job for it.
-    Enqueue pattern:  pool = await create_pool(RedisSettings.from_dsn(...));
-    await pool.enqueue_job("run_migration", migration.id)
-    Return 202 — the work hasn't happened yet.
-  - `GET /migrations/{id}`: read the row, shape it into MigrationStatusOut.
-    Check the row belongs to the caller (404 otherwise).
-  - `GET /migrations/{id}/items`: filter SourceItem by `match_status` when
-    `bucket` is given; order by position; cap the limit.
-"""
 
 from __future__ import annotations
 
 import json
+from sqlalchemy import select
 
+from arq import create_pool
+from arq.connections import RedisSettings
 from fastapi import APIRouter, Cookie, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.config import get_settings
 from app.db import get_session
+from app.models import Migration, SourceItem, SourceType, VersionPreference
 from app.schemas import (
     CreateMigration,
+    ItemOut,
     ItemsPage,
     MigrationCreated,
     MigrationStatusOut,
@@ -50,8 +42,20 @@ async def create_migration(
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
 ) -> MigrationCreated:
-    raise NotImplementedError
+    
+    source_type = SourceType(body.source)
+    version_preference = VersionPreference(body.version_preference)
+    
+    url = body.url
+    auto_commit = body.auto_commit 
+    username = body.username
+    migration = Migration(user_id=user_id,source_username=username, source_type=source_type, source_url=url, auto_commit=auto_commit,  version_preference=version_preference)
 
+    db.add(migration)
+    await db.commit()
+    pool = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+    await pool.enqueue_job("run_migration", migration.id)
+    return MigrationCreated(id = migration.id, status=migration.status.value)
 
 @router.get("/{migration_id}", response_model=MigrationStatusOut)
 async def get_migration(
@@ -59,7 +63,29 @@ async def get_migration(
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
 ) -> MigrationStatusOut:
-    raise NotImplementedError
+    migration = await db.get(
+        Migration, migration_id, options=[selectinload(Migration.target_playlist)]
+    )
+    if migration is None or migration.user_id != user_id:
+        raise HTTPException(404, "migration not found")
+    source_type = SourceType(migration.source_type)
+    source_name = migration.source_name
+    target_playlist_url = migration.target_playlist.url if migration.target_playlist else None
+    status = migration.status.value
+    progress = {"done" : migration.done_items, "total": migration.total_items}
+    buckets = {"matched": migration.count_matched, "substituted": migration.count_substituted, "review": migration.count_review, "unmatched": migration.count_unmatched, "skipped" : migration.count_skipped}
+    error = migration.error
+    return MigrationStatusOut(id=migration_id, 
+                              source_type= source_type,
+                              source_name = source_name, 
+                              status= status, 
+                              buckets=buckets,
+                              progress=progress,
+                              target_playlist_url= target_playlist_url, 
+                              error = error 
+                                 )
+
+
 
 
 @router.get("/{migration_id}/items", response_model=ItemsPage)
@@ -70,4 +96,34 @@ async def get_items(
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
 ) -> ItemsPage:
-    raise NotImplementedError
+    migration = await db.get(Migration, migration_id)
+    if migration is None or migration.user_id != user_id:
+        raise HTTPException(404, "migration not found")
+    stmt = select(SourceItem).where(SourceItem.migration_id == migration_id)
+    if bucket:
+        stmt = stmt.where(SourceItem.match_status == bucket)
+    stmt = stmt.order_by(SourceItem.position).limit(min(limit, 200))
+    result = await db.execute(stmt)
+    rows = result.scalars().all()
+    items = [
+        ItemOut(
+            id=row.id,
+            position=row.position,
+            raw_title=row.raw_title,
+            raw_uploader=row.raw_uploader,
+            raw_duration_sec=row.raw_duration_sec,
+            sc_url=row.sc_url,
+            parsed_artist=row.parsed_artist,
+            parsed_title=row.parsed_title,
+            parsed_version_tags=row.parsed_version_tags,
+            kind=row.kind.value,
+            match_status=row.match_status.value,
+            chosen_spotify_uri=row.chosen_spotify_uri,
+            confidence=float(row.confidence) if row.confidence is not None else None,
+            candidates=row.candidates,
+        )
+        for row in rows
+    ]
+    return ItemsPage(items=items)
+
+
