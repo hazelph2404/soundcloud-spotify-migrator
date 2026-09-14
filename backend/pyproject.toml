@@ -1,0 +1,45 @@
+[project]
+name = "hello-kitty-decaf"
+version = "0.1.0"
+description = "Migrate SoundCloud likes and playlists to Spotify"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30",
+    "alembic>=1.14",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.6",
+    "httpx>=0.28",
+    "arq>=0.26",
+    "redis>=5.2",
+    "yt-dlp>=2026.8.19",
+    "rapidfuzz>=3.10",
+    "cryptography>=44.0",
+    "itsdangerous>=2.2",
+    "python-multipart>=0.0.12",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# B008: FastAPI's Depends()-in-defaults is the intended pattern.
+# RUF012: ARQ's WorkerSettings uses plain class-attribute lists.
+ignore = ["B008", "RUF012"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.uv]
+package = false
