@@ -2,24 +2,20 @@
 
 P0: no SoundCloud account — yt-dlp maintains the web-player client_id for us.
 
-Nudges:
-  - `yt-dlp` has a Python API: `from yt_dlp import YoutubeDL`. `extract_info(url,
-    download=False)` with `skip_download` gives you a dict; a playlist has an
-    `entries` list.
-  - You want per-track title + duration, so don't use `extract_flat` — that
-    skips resolving each track (it's also why a big library is slow, which is
-    why this runs in the worker).
-  - Fields per entry: `id`, `title`, `uploader`, `artist`, `duration`,
-    `webpage_url`. `duration` is seconds (float).
-  - Strip the `?si=...&utm_...` share junk off the URL first.
-  - yt-dlp is blocking — run it off the event loop (`asyncio.to_thread`).
 """
 
 from __future__ import annotations
-
+import asyncio
 from dataclasses import dataclass, field
 
+from yt_dlp import YoutubeDL
 
+# ydl configuration
+_YDL_OPTS = {
+    "skip_download": True, 
+    "quiet": True, 
+    "extract_flat": False
+}
 @dataclass
 class RawTrack:
     sc_track_id: str | None
@@ -35,6 +31,35 @@ class RawPlaylist:
     name: str
     tracks: list[RawTrack] = field(default_factory=list)
 
+#sample of a soundcloud link:
+# https://soundcloud.com/hazelhpham/sets/chill 
+
+def _extract_sync(url: str) -> dict:
+    with YoutubeDL(_YDL_OPTS) as ydl:
+        return ydl.extract_info(url, download=False)
+
 
 async def extract_playlist(url: str) -> RawPlaylist:
-    raise NotImplementedError
+    if not url:
+        raise ValueError("no playlist URL")
+    # CLEAN THE URL 
+
+    url = url.split("?")[0] 
+    
+    # USE THE URL TO SCRAPE THE PLAYLIST
+    info = await asyncio.to_thread(_extract_sync, url)
+    tracks: list[RawTrack] = []
+    for song in info.get("entries") or []:
+        if not song: continue
+        song_id = song.get("id")
+        duration = song.get("duration")
+        tracks.append(RawTrack(
+            sc_track_id=str(song_id) if song_id is not None else None,
+            title=song.get("title") or "",
+            uploader=song.get("uploader"),
+            sc_artist=song.get("artist"),
+            duration_sec=int(duration) if duration is not None else None,
+            sc_url=song.get("webpage_url"),
+        ))
+
+    return RawPlaylist(name=info.get("title") or "playlist", tracks=tracks)
