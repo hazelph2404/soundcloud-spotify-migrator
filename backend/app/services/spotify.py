@@ -1,26 +1,12 @@
-"""Spotify Web API — OAuth (Authorization Code + PKCE), search, playlist creation.
-
-The dataclasses, the httpx client skeleton, and `build_search_queries()` are set up.
-Implement the marked functions.
-
-Nudges:
-  - OAuth: `make_pkce()` creates the verifier + its SHA-256 challenge;
-    `authorize_url()` builds the consent-screen URL; `exchange_code()` and
-    `refresh_token()` POST to `{AUTH_BASE}/api/token` (form-encoded).
-    Docs: https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
-  - `SpotifyClient` wraps the authed calls: `/me`, `/search?type=track`,
-    create playlist, add tracks (100 URIs per request).
-    A search result's length is `duration_ms` — the matcher wants seconds.
-  - Spotify returns 429 with a `Retry-After` header when you go too fast.
-    Decide where that's handled.
-  - `refresh_token()`: Spotify sometimes returns a new refresh token, sometimes
-    not — handle both.
-"""
-
 from __future__ import annotations
 
+import base64
+import hashlib
+import secrets
+import time
 from dataclasses import dataclass
 from typing import Self
+from urllib.parse import urlencode
 
 import httpx
 
@@ -41,19 +27,65 @@ class TokenBundle:
 
 
 def make_pkce() -> tuple[str, str]:
-    raise NotImplementedError
+    verifier = secrets.token_urlsafe(64)
+    digest = hashlib.sha256(verifier.encode("ascii")).digest()
+    challenge = base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+    return verifier, challenge
 
 
 def authorize_url(state: str, challenge: str) -> str:
-    raise NotImplementedError
+    params = {
+        "client_id": settings.spotify_client_id,
+        "response_type": "code",
+        "redirect_uri": settings.spotify_redirect_uri,
+        "state": state,
+        "code_challenge_method": "S256",
+        "code_challenge": challenge,
+        "scope": settings.spotify_scopes,
+    }
+    return f"{AUTH_BASE}/authorize?{urlencode(params)}"
 
 
 async def exchange_code(code: str, verifier: str) -> TokenBundle:
-    raise NotImplementedError
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{AUTH_BASE}/api/token",
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": settings.spotify_redirect_uri,
+                "client_id": settings.spotify_client_id,
+                "code_verifier": verifier,
+            },
+        )
+    if resp.status_code != 200:
+        raise ValueError(f"Spotify exchange_code failed ({resp.status_code}): {resp.text}")
+    data = resp.json()
+    return TokenBundle(
+        access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
+        expires_at=time.time() + data["expires_in"],
+    )
 
 
 async def refresh_token(refresh: str) -> TokenBundle:
-    raise NotImplementedError
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{AUTH_BASE}/api/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": refresh,
+                "client_id": settings.spotify_client_id,
+            },
+        )
+    if resp.is_error:
+        raise ValueError(f"Spotify refresh_token failed ({resp.status_code}): {resp.text}")
+    data = resp.json()
+    return TokenBundle(
+        access_token=data["access_token"],
+        refresh_token=data.get("refresh_token", refresh),
+        expires_at=time.time() + data["expires_in"],
+    )
 
 
 class SpotifyClient:
@@ -71,16 +103,39 @@ class SpotifyClient:
         await self._c.aclose()
 
     async def me(self) -> dict:
-        raise NotImplementedError
+        resp = await self._c.get("/me")
+        if resp.is_error:
+            raise ValueError(f"Spotify /me failed ({resp.status_code}): {resp.text}")
+        return resp.json()
 
     async def search_tracks(self, query: str, limit: int = 10) -> list[Candidate]:
-        raise NotImplementedError
+        resp = await self._c.get("/search", params={"q": query, "type": "track", "limit": limit})
+        if resp.is_error:
+            raise ValueError(f"Spotify search failed ({resp.status_code}): {resp.text}")
+        data = resp.json()
+        candidates = []
+        for song in data["tracks"]["items"]:
+            candidates.append(
+                Candidate(
+                    uri=song["uri"],
+                    name=song["name"],
+                    artists=[a["name"] for a in song["artists"]],
+                    duration_sec=song["duration_ms"] // 1000,
+                    popularity=song.get("popularity", 0),
+                )
+            )
+        return candidates
 
-    async def create_playlist(self, user_id: str, name: str, public: bool = False) -> dict:
-        raise NotImplementedError
+    async def create_playlist(self, name: str, public: bool = False) -> dict:
+        resp = await self._c.post("/me/playlists", json={"name": name, "public": public})
+        if resp.is_error:
+            raise ValueError(f"Spotify create_playlist failed ({resp.status_code}): {resp.text}")
+        return resp.json()
 
     async def add_tracks(self, playlist_id: str, uris: list[str]) -> None:
-        raise NotImplementedError
+        resp = await self._c.post(f"/playlists/{playlist_id}/tracks", json={"uris": uris})
+        if resp.is_error:
+            raise ValueError(f"Spotify add_tracks failed ({resp.status_code}): {resp.text}")
 
 
 def build_search_queries(artist: str | None, title: str) -> list[str]:

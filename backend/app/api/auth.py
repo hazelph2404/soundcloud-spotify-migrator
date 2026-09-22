@@ -1,36 +1,36 @@
-"""Spotify OAuth endpoints.
-
-Router, Redis handle, and models are set up. Wire the two halves.
-
-Nudges:
-  - `/login`: make a `state` (CSRF guard) and a PKCE pair, stash the verifier in
-    Redis keyed by state (short TTL), redirect the user to Spotify's consent URL.
-  - `/callback`: Spotify sends back `code` + `state` (or `error`). Look the
-    verifier back up, exchange the code for tokens, fetch `/me`, upsert a User
-    (encrypt the tokens with `app.crypto`), and give the browser a session
-    cookie. `app/api/migrations.py:current_user_id` shows what the cookie needs.
-  - On any failure, redirect to `{frontend_origin}/?auth_error=...` rather than
-    500 — the frontend reads that query param.
-"""
+"""Spotify OAuth endpoints (Authorization Code + PKCE)."""
 
 from __future__ import annotations
+import json
+import secrets
+from datetime import datetime, timezone
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
+from app.crypto import encrypt
+from app.db import get_session
+from app.models import User
+from app.services.spotify import SpotifyClient, authorize_url, exchange_code, make_pkce
 
 settings = get_settings()
 router = APIRouter(prefix="/auth/spotify", tags=["auth"])
 
-_redis = aioredis.from_url(settings.redis_url)
+_redis = aioredis.from_url(settings.redis_url, decode_responses=True)
 _PKCE_TTL = 600  # seconds
 
 
 @router.get("/login")
 async def login() -> RedirectResponse:
-    raise NotImplementedError
+    state = secrets.token_urlsafe()
+    verifier, challenge = make_pkce()
+    await _redis.set(state, verifier, ex = _PKCE_TTL)
+    url = authorize_url(state, challenge)
+    return RedirectResponse(url)
 
 
 @router.get("/callback")
@@ -39,5 +39,33 @@ async def callback(
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
+    db: AsyncSession = Depends(get_session),
 ) -> RedirectResponse:
-    raise NotImplementedError
+    if error:
+        return RedirectResponse(f"{settings.frontend_origin}/?auth_error={error}")
+    verifier = await _redis.get(state)
+    if verifier is None:
+        return RedirectResponse(f"{settings.frontend_origin}/?auth_error=invalid_state")
+    try:
+        tokens = await exchange_code(code, verifier)
+    except ValueError:
+        return RedirectResponse(f"{settings.frontend_origin}/?auth_error=exchange_failed")
+
+    async with SpotifyClient(tokens.access_token) as client:
+        profile = await client.me()
+
+    result = await db.execute(select(User).where(User.spotify_user_id == profile["id"]))
+    user = result.scalar_one_or_none()
+    if user is None:
+        user = User(spotify_user_id=profile["id"])
+        db.add(user)
+
+    user.spotify_display_name = profile.get("display_name")
+    user.spotify_access_token_enc = encrypt(tokens.access_token)
+    user.spotify_refresh_token_enc = encrypt(tokens.refresh_token)
+    user.spotify_token_expires_at = datetime.fromtimestamp(tokens.expires_at, tz=timezone.utc)
+    await db.commit()
+
+    response = RedirectResponse(f"{settings.frontend_origin}/?connected=1")
+    response.set_cookie("hkd_session", json.dumps({"user_id": user.id}))
+    return response
