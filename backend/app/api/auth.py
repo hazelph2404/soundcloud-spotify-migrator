@@ -1,7 +1,6 @@
 """Spotify OAuth endpoints (Authorization Code + PKCE)."""
 
 from __future__ import annotations
-import json
 import secrets
 from datetime import datetime, timezone
 
@@ -16,6 +15,7 @@ from app.crypto import encrypt
 from app.db import get_session
 from app.models import User
 from app.services.spotify import SpotifyClient, authorize_url, exchange_code, make_pkce
+from app.session import COOKIE_NAME, MAX_AGE_SEC, make_session_cookie
 
 settings = get_settings()
 router = APIRouter(prefix="/auth/spotify", tags=["auth"])
@@ -67,5 +67,12 @@ async def callback(
     await db.commit()
 
     response = RedirectResponse(f"{settings.frontend_origin}/?connected=1")
-    response.set_cookie("hkd_session", json.dumps({"user_id": user.id}))
+    response.set_cookie(
+        COOKIE_NAME,
+        make_session_cookie(user.id),
+        max_age=MAX_AGE_SEC,
+        httponly=True,  # page JS can't read it, so an XSS bug can't steal the session
+        samesite="lax",
+        secure=settings.frontend_origin.startswith("https://"),
+    )
     return response

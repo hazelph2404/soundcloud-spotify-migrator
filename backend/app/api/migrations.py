@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from sqlalchemy import select
 
 from arq import create_pool
@@ -22,6 +21,7 @@ from app.schemas import (
     MigrationCreated,
     MigrationStatusOut,
 )
+from app.session import read_session_cookie
 
 
 settings = get_settings()
@@ -30,13 +30,13 @@ router = APIRouter(prefix="/migrations", tags=["migrations"])
 
 
 async def current_user_id(hkd_session: str | None = Cookie(default=None)) -> str:
-    """The auth cookie contract: a JSON blob with a `user_id`. Set by /auth/spotify/callback."""
+    """The user id from the signed session cookie set by /auth/spotify/callback."""
     if not hkd_session:
         raise HTTPException(401, "not connected to Spotify")
-    try:
-        return json.loads(hkd_session)["user_id"]
-    except (ValueError, KeyError):
-        raise HTTPException(401, "bad session") from None
+    user_id = read_session_cookie(hkd_session)
+    if user_id is None:
+        raise HTTPException(401, "bad session")
+    return user_id
 
 
 @router.post("", status_code=202, response_model=MigrationCreated)
