@@ -12,9 +12,6 @@ import {
  *   1. "Connect Spotify" button
  *   2. a form: paste a public SoundCloud playlist URL -> start migration
  *   3. a poller that shows status + bucket counts while the worker runs
- *
- * YOUR EXERCISE: the review table (list needs_review items, show candidates,
- * let the user pick) is P1 — stub is at the bottom.
  */
 export default function App() {
   const params = new URLSearchParams(window.location.search)
@@ -100,8 +97,7 @@ export default function App() {
         </section>
       )}
 
-      {/* TODO(P1): review table — getItems(migrationId, 'needs_review'), render candidates,
-          PATCH /migrations/{id}/items/{itemId} on selection. */}
+      {/* TODO: review table for needs_review items */}
     </main>
   )
 }

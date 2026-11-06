@@ -1,7 +1,7 @@
 """Parser tests — the 5 real tracks from playlist 'may'20'.
 
-These FAIL until you implement app/services/parser.py. That's the point: make them pass,
-then add more rows from your own library to build the labelled set.
+Each case is a real SoundCloud title with its expected parse. Add rows from more
+playlists to grow the labelled set the matcher is tuned against.
 
     uv run pytest -q
 """
