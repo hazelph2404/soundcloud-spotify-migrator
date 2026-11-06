@@ -13,8 +13,9 @@ from sqlalchemy.orm import selectinload
 
 from app.config import get_settings
 from app.db import get_session
-from app.models import Migration, SourceItem, SourceType, VersionPreference
+from app.models import MatchStatus, Migration, SourceItem, SourceType, VersionPreference
 from app.schemas import (
+    ChooseCandidate,
     CreateMigration,
     ItemOut,
     ItemsPage,
@@ -22,8 +23,10 @@ from app.schemas import (
     MigrationStatusOut,
 )
 
+
 settings = get_settings()
 router = APIRouter(prefix="/migrations", tags=["migrations"])
+
 
 
 async def current_user_id(hkd_session: str | None = Cookie(default=None)) -> str:
@@ -127,3 +130,61 @@ async def get_items(
     return ItemsPage(items=items)
 
 
+@router.patch("/{migration_id}/items/{item_id}", response_model=ItemOut)
+async def choose_candidate(
+    migration_id: str,
+    item_id: str,
+    body: ChooseCandidate,
+    user_id: str = Depends(current_user_id),
+    db: AsyncSession = Depends(get_session),
+) -> ItemOut:
+    # 1. the migration must be yours
+    migration = await db.get(Migration, migration_id)
+    if migration is None or migration.user_id != user_id:
+        raise HTTPException(404, "migration not found")
+
+    # 2. the item must belong to that migration
+    item = await db.get(SourceItem, item_id)
+    if item is None or item.migration_id != migration_id:
+        raise HTTPException(404, "item not found")
+
+    # 3. the choice must be one of the candidates (or None = no match)
+    allowed = {c["uri"] for c in item.candidates}
+    if body.spotify_uri is not None and body.spotify_uri not in allowed:
+        raise HTTPException(400, "uri is not one of this item's candidates")
+
+    # 4. record the choice: remember the old status first
+    was_review = item.match_status == MatchStatus.needs_review
+    if body.spotify_uri is not None:
+        item.match_status = MatchStatus.user_confirmed
+        item.chosen_spotify_uri = body.spotify_uri
+    else:
+        item.match_status = MatchStatus.unmatched
+        item.chosen_spotify_uri = None
+
+    # 5. move the item between bucket counters (only once, on its first review)
+    if was_review:
+        migration.count_review -= 1
+        if body.spotify_uri is not None:
+            migration.count_matched += 1
+        else:
+            migration.count_unmatched += 1
+
+    # 6. save and reply
+    await db.commit()
+    return ItemOut(
+        id=item.id,
+        position=item.position,
+        raw_title=item.raw_title,
+        raw_uploader=item.raw_uploader,
+        raw_duration_sec=item.raw_duration_sec,
+        sc_url=item.sc_url,
+        parsed_artist=item.parsed_artist,
+        parsed_title=item.parsed_title,
+        parsed_version_tags=item.parsed_version_tags,
+        kind=item.kind.value,
+        match_status=item.match_status.value,
+        chosen_spotify_uri=item.chosen_spotify_uri,
+        confidence=float(item.confidence) if item.confidence is not None else None,
+        candidates=item.candidates,
+    )

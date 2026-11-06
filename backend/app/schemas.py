@@ -55,3 +55,6 @@ class ItemOut(BaseModel):
 class ItemsPage(BaseModel):
     items: list[ItemOut]
     next_cursor: str | None = None
+
+class ChooseCandidate(BaseModel):
+    spotify_uri: str | None  # None = "none of these candidates is right"
