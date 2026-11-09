@@ -1,0 +1,140 @@
+/* ---- custom cursor ---- */
+.has-cursor,
+.has-cursor * {
+  cursor: none !important;
+}
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1000;
+}
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.cursor-ring {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: width 0.25s, height 0.25s, margin 0.25s, background 0.25s;
+}
+.cursor-ring span {
+  font: 800 0.8rem var(--display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.cursor-ring--label {
+  width: 92px;
+  height: 92px;
+  margin: -46px 0 0 -46px;
+  background: var(--yellow);
+  border-width: 3px;
+}
+.cursor-ring--label span {
+  opacity: 1;
+}
+
+/* ---- preloader ---- */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  transition: transform 0.75s cubic-bezier(0.76, 0, 0.24, 1);
+}
+.preloader--leave {
+  transform: translateY(-100%);
+}
+.preloader__hand {
+  font: 2rem var(--hand);
+  color: var(--pink);
+  margin: 0;
+}
+.preloader__count {
+  font: 800 clamp(5rem, 18vw, 14rem) / 0.9 var(--display);
+  letter-spacing: -0.05em;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--orange);
+}
+.preloader__bar {
+  width: min(320px, 70vw);
+  height: 6px;
+  background: rgba(246, 235, 221, 0.15);
+}
+.preloader__bar div {
+  height: 100%;
+  background: var(--yellow);
+  transform-origin: left;
+}
+
+/* ---- split text ---- */
+.split__word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.split__char {
+  display: inline-block;
+  transform: translateY(110%) rotate(8deg);
+  opacity: 0;
+  animation: char-up 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+@keyframes char-up {
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---- marquee ---- */
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--ink);
+  color: var(--yellow);
+  border-block: 3px solid var(--ink);
+  font: 800 1rem/1 var(--display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 9px 0;
+}
+.marquee__track {
+  display: inline-flex;
+  animation: marquee 22s linear infinite;
+}
+.marquee__track span {
+  padding-right: 2rem;
+}
+.marquee--reverse .marquee__track {
+  animation-direction: reverse;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split__char {
+    transform: none;
+    opacity: 1;
+  }
+}
