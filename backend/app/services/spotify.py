@@ -133,7 +133,7 @@ class SpotifyClient:
         return resp.json()
 
     async def add_tracks(self, playlist_id: str, uris: list[str]) -> None:
-        resp = await self._c.post(f"/playlists/{playlist_id}/tracks", json={"uris": uris})
+        resp = await self._c.post(f"/playlists/{playlist_id}/items", json={"uris": uris})
         if resp.is_error:
             raise ValueError(f"Spotify add_tracks failed ({resp.status_code}): {resp.text}")
 
