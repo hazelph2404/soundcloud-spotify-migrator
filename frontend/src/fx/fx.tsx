@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import './fx.css'
 
 /**
@@ -49,13 +50,16 @@ export function Cursor() {
   }, [enabled])
 
   if (!enabled) return null
-  return (
+  // Rendered into <body> on purpose: if a parent has a transform/animation, position: fixed
+  // would be relative to that parent instead of the screen, and the cursor drifts away.
+  return createPortal(
     <>
       <div ref={ringRef} className={`cursor-ring ${label ? 'cursor-ring--label' : ''}`} aria-hidden="true">
         <span>{label}</span>
       </div>
       <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
-    </>
+    </>,
+    document.body,
   )
 }
 

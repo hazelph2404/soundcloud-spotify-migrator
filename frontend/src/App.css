@@ -18,7 +18,7 @@
   animation: room-in 0.7s ease-out both;
 }
 @keyframes room-in {
-  from { opacity: 0; transform: scale(1.03); }
+  from { opacity: 0; } /* opacity only: a transform here would break position: fixed inside */
 }
 
 /* halftone print dots */
