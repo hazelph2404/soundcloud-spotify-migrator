@@ -126,8 +126,10 @@ class SpotifyClient:
             )
         return candidates
 
-    async def create_playlist(self, name: str, public: bool = False) -> dict:
-        resp = await self._c.post("/me/playlists", json={"name": name, "public": public})
+    async def create_playlist(self, name: str, public: bool = False, description: str = "") -> dict:
+        resp = await self._c.post(
+            "/me/playlists", json={"name": name, "public": public, "description": description}
+        )
         if resp.is_error:
             raise ValueError(f"Spotify create_playlist failed ({resp.status_code}): {resp.text}")
         return resp.json()

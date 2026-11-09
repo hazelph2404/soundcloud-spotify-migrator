@@ -223,7 +223,10 @@ async def _commit_playlist(
     if not uris:
         return
 
-    created = await client.create_playlist(migration.source_name or "SoundCloud import")
+    created = await client.create_playlist(
+        f"{migration.source_name or 'SoundCloud import'} [created by HKD]",
+        description="created by hello kitty decaf! use this app to convert more COOL songs from your soundcloud!",
+    )
     for start in range(0, len(uris), ADD_TRACKS_BATCH):
         await client.add_tracks(created["id"], uris[start : start + ADD_TRACKS_BATCH])
 
