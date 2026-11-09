@@ -1,11 +1,9 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import './App.css'
-import {
-  connectSpotify,
-  createMigration,
-  getMigration,
-  type MigrationStatus,
-} from './api'
+import * as realApi from './api'
+import type { Item, MigrationStatus } from './api'
+import * as demoApi from './demo'
+import { DEMO, DEMO_URL } from './demo'
 import Hallway from './hallway/Hallway'
 import { Cursor, Preloader, SplitText } from './fx/fx'
 import { reducedMotion } from './fx/motion'
@@ -19,16 +17,19 @@ import { reducedMotion } from './fx/motion'
  * The room's color goes from orange (SoundCloud side) to green as tracks get matched.
  */
 const TERMINAL = ['done', 'failed']
+// Demo mode swaps the real API for a recorded run (see demo.ts), so the UI is identical.
+const api = DEMO ? demoApi : realApi
 
 export default function App() {
   const params = new URLSearchParams(window.location.search)
-  const [connected] = useState(params.get('connected') === '1')
-  const [url, setUrl] = useState('')
+  const [connected] = useState(DEMO || params.get('connected') === '1')
+  const [url, setUrl] = useState(DEMO ? DEMO_URL : '')
   const [migrationId, setMigrationId] = useState<string | null>(null)
   const [status, setStatus] = useState<MigrationStatus | null>(null)
+  const [items, setItems] = useState<Item[]>([])
   const [error, setError] = useState<string | null>(params.get('auth_error'))
   // Coming back from Spotify (success or error) lands you inside the room, not the hallway.
-  const [entered, setEntered] = useState(connected || error !== null)
+  const [entered, setEntered] = useState((connected && !DEMO) || error !== null)
   const [preloading, setPreloading] = useState(() => !entered && !reducedMotion())
 
   // Poll while a migration is running.
@@ -36,14 +37,17 @@ export default function App() {
     if (!migrationId) return
     const tick = async () => {
       try {
-        const s = await getMigration(migrationId)
+        const s = await api.getMigration(migrationId)
         setStatus(s)
-        if (TERMINAL.includes(s.status)) clearInterval(timer)
+        if (TERMINAL.includes(s.status)) {
+          clearInterval(timer)
+          if (s.status === 'done') setItems((await api.getItems(migrationId)).items)
+        }
       } catch (e) {
         setError(String(e))
       }
     }
-    const timer = setInterval(tick, 2000)
+    const timer = setInterval(tick, DEMO ? 700 : 2000)
     tick()
     return () => clearInterval(timer)
   }, [migrationId])
@@ -51,8 +55,9 @@ export default function App() {
   const start = async () => {
     setError(null)
     setStatus(null)
+    setItems([])
     try {
-      const { id } = await createMigration({ source: 'playlist', url })
+      const { id } = await api.createMigration({ source: 'playlist', url })
       setMigrationId(id)
     } catch (e) {
       setError(String(e))
@@ -94,14 +99,18 @@ export default function App() {
       {!connected ? (
         <section className="card">
           <p className="card__hand">first, let me in</p>
-          <button className="btn btn--big" onClick={connectSpotify} data-cursor="let me in">
+          <button className="btn btn--big" onClick={realApi.connectSpotify} data-cursor="let me in">
             Connect Spotify
           </button>
           <p className="card__small">You'll log in on Spotify's own page. This app never sees your password.</p>
         </section>
       ) : (
         <section className="card">
-          <p className="card__ok">✓ Spotify connected</p>
+          {DEMO ? (
+            <p className="card__ok card__ok--demo">demo: a real recorded run, no login needed</p>
+          ) : (
+            <p className="card__ok">✓ Spotify connected</p>
+          )}
           <label className="card__hand" htmlFor="sc-url">
             now, the soundcloud link
           </label>
@@ -139,6 +148,26 @@ export default function App() {
             <li><b>{status.buckets.skipped}</b> skipped (mix/podcast)</li>
           </ul>
           {status.status === 'failed' && status.error && <p className="room__error">{status.error}</p>}
+          {items.length > 0 && (
+            <ol className="report">
+              {items.map((it) => {
+                const best = it.candidates.find((c) => c.uri === it.chosen_spotify_uri) ?? it.candidates[0]
+                return (
+                  <li key={it.id} className={`report__row report__row--${it.match_status}`}>
+                    <span className="report__from">{it.raw_title}</span>
+                    <span className="report__arrow" aria-hidden="true">→</span>
+                    <span className="report__to">
+                      {it.chosen_spotify_uri && best
+                        ? `${best.name} · ${best.artists.join(', ')}`
+                        : best
+                          ? `not found (closest: ${best.name}, ${Math.round((it.confidence ?? 0) * 100)}%)`
+                          : 'not found'}
+                    </span>
+                  </li>
+                )
+              })}
+            </ol>
+          )}
           {status.target_playlist_url && (
             <a className="btn btn--big" href={status.target_playlist_url} target="_blank" rel="noreferrer">
               Open Spotify playlist →
