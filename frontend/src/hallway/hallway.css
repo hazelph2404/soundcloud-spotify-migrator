@@ -47,8 +47,13 @@
   height: 30vh;
   background: #ff8a3d;
 }
-.far-shape--0 { border-radius: 50%; }
-.far-shape--1 { border-radius: 40% 60% 55% 45% / 50% 40% 60% 50%; transform: translateY(-14vh); }
+.far-shape--0 {
+  border-radius: 50%;
+}
+.far-shape--1 {
+  border-radius: 40% 60% 55% 45% / 50% 40% 60% 50%;
+  transform: translateY(-14vh);
+}
 .far-shape--2 {
   width: 40vh;
   height: 14vh;
@@ -103,7 +108,9 @@
   animation: nudge 1.4s ease-in-out infinite;
 }
 @keyframes nudge {
-  50% { translate: 10px 0; }
+  50% {
+    translate: 10px 0;
+  }
 }
 
 .frame {
@@ -151,21 +158,44 @@
   overflow: hidden;
   z-index: 1;
 }
-.album--p0 .album__cover { /* sun + stripes */
+.album--p0 .album__cover {
+  /* sun + stripes */
   background:
     radial-gradient(circle at 50% 42%, var(--paper) 0 22%, transparent 22.5%),
-    repeating-linear-gradient(0deg, hsl(var(--hue) 95% 55%) 0 14px, hsl(calc(var(--hue) + 40) 95% 62%) 14px 28px);
+    repeating-linear-gradient(
+      0deg,
+      hsl(var(--hue) 95% 55%) 0 14px,
+      hsl(calc(var(--hue) + 40) 95% 62%) 14px 28px
+    );
 }
-.album--p1 .album__cover { /* bullseye */
-  background: repeating-radial-gradient(circle at 50% 50%,
-    hsl(var(--hue) 95% 60%) 0 18px, var(--ink) 18px 26px, var(--paper) 26px 40px);
+.album--p1 .album__cover {
+  /* bullseye */
+  background: repeating-radial-gradient(
+    circle at 50% 50%,
+    hsl(var(--hue) 95% 60%) 0 18px,
+    var(--ink) 18px 26px,
+    var(--paper) 26px 40px
+  );
 }
-.album--p2 .album__cover { /* checkerboard */
-  background: conic-gradient(var(--ink) 25%, hsl(var(--hue) 95% 62%) 0 50%, var(--ink) 0 75%, hsl(var(--hue) 95% 62%) 0) 0 0 / 25% 25%;
+.album--p2 .album__cover {
+  /* checkerboard */
+  background: conic-gradient(
+      var(--ink) 25%,
+      hsl(var(--hue) 95% 62%) 0 50%,
+      var(--ink) 0 75%,
+      hsl(var(--hue) 95% 62%) 0
+    )
+    0 0 / 25% 25%;
 }
-.album--p3 .album__cover { /* big diagonal split + dot */
+.album--p3 .album__cover {
+  /* big diagonal split + dot */
   background:
-    radial-gradient(circle at 70% 30%, var(--yellow) 0 16%, var(--ink) 16.5% 19%, transparent 19.5%),
+    radial-gradient(
+      circle at 70% 30%,
+      var(--yellow) 0 16%,
+      var(--ink) 16.5% 19%,
+      transparent 19.5%
+    ),
     linear-gradient(135deg, hsl(var(--hue) 95% 60%) 50%, var(--paper) 50%);
 }
 .album__vinyl {
@@ -197,10 +227,12 @@
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border: 2px solid var(--ink);
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     hsl(var(--hue) 95% 72%) 0 62%,
     hsl(calc(var(--hue) + 30) 90% 50%) 62% 78%,
-    hsl(calc(var(--hue) + 200) 70% 30%) 78%);
+    hsl(calc(var(--hue) + 200) 70% 30%) 78%
+  );
 }
 .photo__sun {
   position: absolute;
@@ -256,9 +288,20 @@
   border-radius: 50%;
   box-shadow: 5px 5px 0 var(--ink);
 }
-.near-sticker--0 { background: var(--yellow); rotate: -12deg; }
-.near-sticker--1 { background: var(--pink); rotate: 10deg; margin-top: 62vh; }
-.near-sticker--2 { background: var(--green); rotate: -4deg; margin-top: 30vh; }
+.near-sticker--0 {
+  background: var(--yellow);
+  rotate: -12deg;
+}
+.near-sticker--1 {
+  background: var(--pink);
+  rotate: 10deg;
+  margin-top: 62vh;
+}
+.near-sticker--2 {
+  background: var(--green);
+  rotate: -4deg;
+  margin-top: 30vh;
+}
 
 /* ---- floor: a checkerboard strip, moving with the wall ---- */
 .hallway__floor {
@@ -268,8 +311,8 @@
   bottom: 0;
   height: 16vh;
   border-top: 4px solid var(--ink);
-  background:
-    conic-gradient(var(--ink) 25%, var(--paper) 0 50%, var(--ink) 0 75%, var(--paper) 0) 0 0 / 64px 64px;
+  background: conic-gradient(var(--ink) 25%, var(--paper) 0 50%, var(--ink) 0 75%, var(--paper) 0) 0
+    0 / 64px 64px;
   z-index: 2;
 }
 
@@ -316,8 +359,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 45%, var(--yellow) 0 18%, transparent 18.5%),
-    var(--green);
+    radial-gradient(circle at 50% 45%, var(--yellow) 0 18%, transparent 18.5%), var(--green);
 }
 .door__panel {
   position: absolute;
@@ -382,9 +424,17 @@
   animation: knock 1.8s ease-in-out infinite;
 }
 @keyframes knock {
-  0%, 70%, 100% { rotate: 0deg; }
-  76% { rotate: -1.2deg; }
-  82% { rotate: 1deg; }
+  0%,
+  70%,
+  100% {
+    rotate: 0deg;
+  }
+  76% {
+    rotate: -1.2deg;
+  }
+  82% {
+    rotate: 1deg;
+  }
 }
 .door--open .door__panel {
   animation: none;
@@ -405,8 +455,13 @@
   padding: 8px 14px;
   cursor: pointer;
 }
-.hallway__skip:hover { background: var(--yellow); }
-.hallway__skip:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.hallway__skip:hover {
+  background: var(--yellow);
+}
+.hallway__skip:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 3px;
+}
 
 .hallway__progress {
   position: absolute;
@@ -433,9 +488,18 @@
 }
 
 @media (max-width: 640px) {
-  .hallway__wall { gap: 14vw; }
-  .door__frame { width: 28vh; height: 50vh; }
-  .near-sticker { width: 64px; height: 64px; font-size: 2.2rem; }
+  .hallway__wall {
+    gap: 14vw;
+  }
+  .door__frame {
+    width: 28vh;
+    height: 50vh;
+  }
+  .near-sticker {
+    width: 64px;
+    height: 64px;
+    font-size: 2.2rem;
+  }
 }
 
 /* ---- tickers + door wipe (award-site extras) ---- */
@@ -461,7 +525,9 @@
   animation: wipe 0.75s cubic-bezier(0.76, 0, 0.24, 1) forwards;
 }
 @keyframes wipe {
-  to { clip-path: circle(150% at 78% 55%); }
+  to {
+    clip-path: circle(150% at 78% 55%);
+  }
 }
 
 /* walk button: click to step forward (for people who don't like scroll-to-the-right) */
@@ -481,6 +547,14 @@
   cursor: pointer;
   animation: nudge 1.4s ease-in-out infinite;
 }
-.hallway__walk:hover { background: var(--paper); }
-.hallway__walk:active { translate: 3px 3px; box-shadow: 2px 2px 0 var(--ink); }
-.hallway__walk:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.hallway__walk:hover {
+  background: var(--paper);
+}
+.hallway__walk:active {
+  translate: 3px 3px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.hallway__walk:focus-visible {
+  outline: 3px solid var(--pink);
+  outline-offset: 3px;
+}

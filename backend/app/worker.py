@@ -18,7 +18,7 @@ user, and each track costs up to three searches.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from arq.connections import RedisSettings
 from sqlalchemy import delete
@@ -59,9 +59,7 @@ COUNTER_FOR_STATUS = {
 
 async def run_migration(ctx: dict, migration_id: str) -> None:
     async with SessionLocal() as db:
-        migration = await db.get(
-            Migration, migration_id, options=[selectinload(Migration.user)]
-        )
+        migration = await db.get(Migration, migration_id, options=[selectinload(Migration.user)])
         # Already finished (e.g. the job was delivered twice): don't build a second playlist.
         if migration is None or migration.status == MigrationStatus.done:
             return
@@ -171,14 +169,14 @@ async def _classify(
 
 async def _access_token(db, user: User) -> str:
     """The user's Spotify access token, refreshed first if it's about to expire."""
-    expires_soon = datetime.now(timezone.utc) + TOKEN_REFRESH_MARGIN
+    expires_soon = datetime.now(UTC) + TOKEN_REFRESH_MARGIN
     if user.spotify_token_expires_at > expires_soon:
         return decrypt(user.spotify_access_token_enc)
 
     tokens = await refresh_token(decrypt(user.spotify_refresh_token_enc))
     user.spotify_access_token_enc = encrypt(tokens.access_token)
     user.spotify_refresh_token_enc = encrypt(tokens.refresh_token)
-    user.spotify_token_expires_at = datetime.fromtimestamp(tokens.expires_at, tz=timezone.utc)
+    user.spotify_token_expires_at = datetime.fromtimestamp(tokens.expires_at, tz=UTC)
     await db.commit()
     return tokens.access_token
 
@@ -225,7 +223,10 @@ async def _commit_playlist(
 
     created = await client.create_playlist(
         f"{migration.source_name or 'SoundCloud import'} [created by HKD]",
-        description="created by hello kitty decaf! use this app to convert more COOL songs from your soundcloud!",
+        description=(
+            "created by hello kitty decaf! "
+            "use this app to convert more COOL songs from your soundcloud!"
+        ),
     )
     for start in range(0, len(uris), ADD_TRACKS_BATCH):
         await client.add_tracks(created["id"], uris[start : start + ADD_TRACKS_BATCH])

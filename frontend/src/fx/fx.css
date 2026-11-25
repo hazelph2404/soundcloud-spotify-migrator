@@ -26,7 +26,11 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  transition: width 0.25s, height 0.25s, margin 0.25s, background 0.25s;
+  transition:
+    width 0.25s,
+    height 0.25s,
+    margin 0.25s,
+    background 0.25s;
 }
 .cursor-ring span {
   font: 800 0.8rem var(--display);

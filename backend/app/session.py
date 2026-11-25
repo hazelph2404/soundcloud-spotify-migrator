@@ -16,7 +16,9 @@ COOKIE_NAME = "hkd_session"
 MAX_AGE_SEC = 30 * 24 * 3600  # 30 days
 
 if settings.session_secret == "dev-insecure-change-me":
-    print("[session] SESSION_SECRET is the default — set a random one in .env before sharing the app")
+    print(
+        "[session] SESSION_SECRET is the default - set a random one in .env before sharing the app"
+    )
 
 _serializer = URLSafeTimedSerializer(settings.session_secret, salt="hkd-session")
 

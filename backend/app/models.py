@@ -88,9 +88,7 @@ class Migration(Base):
     __tablename__ = "migrations"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
-    user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), index=True
-    )
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
 
     source_type: Mapped[SourceType] = mapped_column(Enum(SourceType, name="source_type"))
     source_url: Mapped[str | None] = mapped_column(Text)

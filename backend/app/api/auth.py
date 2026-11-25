@@ -1,8 +1,9 @@
 """Spotify OAuth endpoints (Authorization Code + PKCE)."""
 
 from __future__ import annotations
+
 import secrets
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, Request
@@ -28,7 +29,7 @@ _PKCE_TTL = 600  # seconds
 async def login() -> RedirectResponse:
     state = secrets.token_urlsafe()
     verifier, challenge = make_pkce()
-    await _redis.set(state, verifier, ex = _PKCE_TTL)
+    await _redis.set(state, verifier, ex=_PKCE_TTL)
     url = authorize_url(state, challenge)
     return RedirectResponse(url)
 
@@ -65,7 +66,7 @@ async def callback(
     user.spotify_display_name = profile.get("display_name")
     user.spotify_access_token_enc = encrypt(tokens.access_token)
     user.spotify_refresh_token_enc = encrypt(tokens.refresh_token)
-    user.spotify_token_expires_at = datetime.fromtimestamp(tokens.expires_at, tz=timezone.utc)
+    user.spotify_token_expires_at = datetime.fromtimestamp(tokens.expires_at, tz=UTC)
     await db.commit()
 
     response = RedirectResponse(f"{settings.frontend_origin}/?connected=1")

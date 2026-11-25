@@ -1,11 +1,7 @@
-
-
 from __future__ import annotations
 
-
-from sqlalchemy import select
-
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,10 +18,8 @@ from app.schemas import (
 )
 from app.session import read_session_cookie
 
-
 settings = get_settings()
 router = APIRouter(prefix="/migrations", tags=["migrations"])
-
 
 
 async def current_user_id(hkd_session: str | None = Cookie(default=None)) -> str:
@@ -40,7 +34,7 @@ async def current_user_id(hkd_session: str | None = Cookie(default=None)) -> str
 
 @router.post("", status_code=202, response_model=MigrationCreated)
 async def create_migration(
-    request: Request, 
+    request: Request,
     body: CreateMigration,
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
@@ -48,16 +42,24 @@ async def create_migration(
     pool = request.app.state.arq
     source_type = SourceType(body.source)
     version_preference = VersionPreference(body.version_preference)
-    
+
     url = body.url
-    auto_commit = body.auto_commit 
+    auto_commit = body.auto_commit
     username = body.username
-    migration = Migration(user_id=user_id,source_username=username, source_type=source_type, source_url=url, auto_commit=auto_commit,  version_preference=version_preference)
+    migration = Migration(
+        user_id=user_id,
+        source_username=username,
+        source_type=source_type,
+        source_url=url,
+        auto_commit=auto_commit,
+        version_preference=version_preference,
+    )
 
     db.add(migration)
     await db.commit()
     await pool.enqueue_job("run_migration", migration.id)
-    return MigrationCreated(id = migration.id, status=migration.status.value)
+    return MigrationCreated(id=migration.id, status=migration.status.value)
+
 
 @router.get("/{migration_id}", response_model=MigrationStatusOut)
 async def get_migration(
@@ -74,20 +76,25 @@ async def get_migration(
     source_name = migration.source_name
     target_playlist_url = migration.target_playlist.url if migration.target_playlist else None
     status = migration.status.value
-    progress = {"done" : migration.done_items, "total": migration.total_items}
-    buckets = {"matched": migration.count_matched, "substituted": migration.count_substituted, "review": migration.count_review, "unmatched": migration.count_unmatched, "skipped" : migration.count_skipped}
+    progress = {"done": migration.done_items, "total": migration.total_items}
+    buckets = {
+        "matched": migration.count_matched,
+        "substituted": migration.count_substituted,
+        "review": migration.count_review,
+        "unmatched": migration.count_unmatched,
+        "skipped": migration.count_skipped,
+    }
     error = migration.error
-    return MigrationStatusOut(id=migration_id, 
-                              source_type= source_type,
-                              source_name = source_name, 
-                              status= status, 
-                              buckets=buckets,
-                              progress=progress,
-                              target_playlist_url= target_playlist_url, 
-                              error = error 
-                                 )
-
-
+    return MigrationStatusOut(
+        id=migration_id,
+        source_type=source_type,
+        source_name=source_name,
+        status=status,
+        buckets=buckets,
+        progress=progress,
+        target_playlist_url=target_playlist_url,
+        error=error,
+    )
 
 
 @router.get("/{migration_id}/items", response_model=ItemsPage)

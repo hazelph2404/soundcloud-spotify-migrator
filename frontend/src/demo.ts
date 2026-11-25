@@ -13,7 +13,14 @@ export const DEMO_URL = 'https://soundcloud.com/hazelhpham/sets/w0rk-m0r3-may20'
 
 // Recorded from the real run. Candidate names/artists are what Spotify actually returned.
 const ITEMS: Item[] = [
-  item(0, 'Amindi K. Fro$t, Tessellated & Valleyz ~ Pine & Ginger', 'auto_confirmed', 0.993, 'Pine & Ginger', ['Amindi', 'Tessellated', 'Valleyz']),
+  item(
+    0,
+    'Amindi K. Fro$t, Tessellated & Valleyz ~ Pine & Ginger',
+    'auto_confirmed',
+    0.993,
+    'Pine & Ginger',
+    ['Amindi', 'Tessellated', 'Valleyz'],
+  ),
   item(1, 'FKJ feat. Tom Bailey - Drops', 'auto_confirmed', 1.0, 'Drops', ['FKJ', 'Tom Bailey']),
   item(2, 'Jinsang - Egyptian Pools', 'auto_confirmed', 1.0, 'Egyptian Pools', ['Jinsang']),
   item(3, "Masego - Isn't She Lovely", 'unmatched', 0.533, 'Prone', ['Masego']),
@@ -41,7 +48,14 @@ export async function getMigration(): Promise<MigrationStatus> {
     id: 'demo',
     source_type: 'playlist',
     source_name: "may'20",
-    status: elapsed < 1200 ? 'extracting' : finished ? 'done' : done === ITEMS.length ? 'committing' : 'matching',
+    status:
+      elapsed < 1200
+        ? 'extracting'
+        : finished
+          ? 'done'
+          : done === ITEMS.length
+            ? 'committing'
+            : 'matching',
     progress: { done, total: ITEMS.length },
     buckets: {
       matched: count('auto_confirmed'),

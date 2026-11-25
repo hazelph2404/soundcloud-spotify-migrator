@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from 'react'
 import { MEMORIES, type Memory } from './memories'
 import { Marquee, SplitText } from '../fx/fx'
 import './hallway.css'
@@ -19,7 +25,13 @@ function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-export default function Hallway({ onEnter, introDelay = 0 }: { onEnter: () => void; introDelay?: number }) {
+export default function Hallway({
+  onEnter,
+  introDelay = 0,
+}: {
+  onEnter: () => void
+  introDelay?: number
+}) {
   const sectionRef = useRef<HTMLElement>(null)
   const wallRef = useRef<HTMLDivElement>(null)
   const farRef = useRef<HTMLDivElement>(null)
@@ -65,8 +77,10 @@ export default function Hallway({ onEnter, introDelay = 0 }: { onEnter: () => vo
           wallRef.current.style.transform = `translate3d(${-current * SPEED.wall}px,0,0)`
           wallRef.current.style.setProperty('--skew', `${skew}deg`)
         }
-        if (farRef.current) farRef.current.style.transform = `translate3d(${-current * SPEED.far}px,0,0)`
-        if (nearRef.current) nearRef.current.style.transform = `translate3d(${-current * SPEED.near}px,0,0)`
+        if (farRef.current)
+          farRef.current.style.transform = `translate3d(${-current * SPEED.far}px,0,0)`
+        if (nearRef.current)
+          nearRef.current.style.transform = `translate3d(${-current * SPEED.near}px,0,0)`
         if (floorRef.current) floorRef.current.style.backgroundPositionX = `${-current}px`
         if (lightRef.current) lightRef.current.style.opacity = String(0.35 + 0.65 * progress)
         if (barRef.current) barRef.current.style.transform = `scaleX(${progress})`
@@ -115,7 +129,12 @@ export default function Hallway({ onEnter, introDelay = 0 }: { onEnter: () => vo
       <p className="door__sign">your 2016 lives in here</p>
       <div className="door__frame">
         <div className="door__room" aria-hidden="true" />
-        <button className="door__panel" onClick={openDoor} aria-label="Open the door" data-cursor="open">
+        <button
+          className="door__panel"
+          onClick={openDoor}
+          aria-label="Open the door"
+          data-cursor="open"
+        >
           <span className="door__knob" />
           <span className="door__label">open</span>
         </button>
@@ -176,15 +195,24 @@ export default function Hallway({ onEnter, introDelay = 0 }: { onEnter: () => vo
         <div className="hallway__dots" aria-hidden="true" />
 
         <div className="hallway__ticker">
-          <Marquee>lowkey finds ★ bootlegs ★ remixes nobody knew ★ summer 2016 ★ 3am bus home ★ on repeat ★</Marquee>
+          <Marquee>
+            lowkey finds ★ bootlegs ★ remixes nobody knew ★ summer 2016 ★ 3am bus home ★ on repeat ★
+          </Marquee>
         </div>
         <div className="hallway__ticker hallway__ticker--floor">
-          <Marquee reverse>save the songs before they disappear ✿ soundcloud → spotify ✿ hello kitty decaf ✿</Marquee>
+          <Marquee reverse>
+            save the songs before they disappear ✿ soundcloud → spotify ✿ hello kitty decaf ✿
+          </Marquee>
         </div>
         {wiping && <div className="wipe" aria-hidden="true" />}
 
         {!atDoor && (
-          <button className="hallway__walk" onClick={walk} aria-label="Walk forward" data-cursor="walk">
+          <button
+            className="hallway__walk"
+            onClick={walk}
+            aria-label="Walk forward"
+            data-cursor="walk"
+          >
             →
           </button>
         )}
@@ -231,7 +259,11 @@ function Frame({ memory, pattern }: { memory: Memory; pattern: number }) {
     <figure className="frame photo" style={style} {...hover}>
       <span className="tape" aria-hidden="true" />
       <div className="photo__image">
-        {src ? <img src={src} alt="" loading="lazy" /> : <span className="photo__sun" aria-hidden="true" />}
+        {src ? (
+          <img src={src} alt="" loading="lazy" />
+        ) : (
+          <span className="photo__sun" aria-hidden="true" />
+        )}
       </div>
       <figcaption>{caption}</figcaption>
     </figure>

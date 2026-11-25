@@ -1,4 +1,5 @@
 """Parse a messy SoundCloud title into structured fields."""
+
 from __future__ import annotations
 
 import re
@@ -14,7 +15,7 @@ MIX_PATTERNS = re.compile(
 SEPARATOR = re.compile(r"\s+[-~–—|]\s+")
 FEAT = re.compile(
     r"[\(\[]?(?:feat\.?|ft\.?|featuring)\s+([^\)\]\-~–—|]+)[\)\]]?",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -38,11 +39,7 @@ def normalize(s: str) -> str:
     s = "".join(c for c in s if not unicodedata.combining(c))
     res = []
     s = s.split(" ")
-    dict = {
-        '$': 's',
-        '&': 'and',
-        '@': 'at'
-    }
+    dict = {"$": "s", "&": "and", "@": "at"}
     for word in s:
         word_res = []
         for char in word:
@@ -52,8 +49,8 @@ def normalize(s: str) -> str:
                 continue
             else:
                 word_res.append(char)
-        res.append(''.join(word_res))
-    return ' '.join(res)
+        res.append("".join(word_res))
+    return " ".join(res)
 
 
 def classify(title: str, duration_sec: int | None, mix_max_sec: int = 900) -> str:
@@ -89,5 +86,6 @@ def parse(title, uploader=None, sc_artist=None, duration_sec=None, mix_max_sec=9
     else:
         artist, song = None, working.strip()
 
-    return ParsedTrack(artist=artist, title=song, features=features,
-                       version_tags=version_tags, kind=kind)
+    return ParsedTrack(
+        artist=artist, title=song, features=features, version_tags=version_tags, kind=kind
+    )

@@ -18,7 +18,9 @@
   animation: room-in 0.7s ease-out both;
 }
 @keyframes room-in {
-  from { opacity: 0; } /* opacity only: a transform here would break position: fixed inside */
+  from {
+    opacity: 0;
+  } /* opacity only: a transform here would break position: fixed inside */
 }
 
 /* halftone print dots */
@@ -133,7 +135,9 @@
   padding: 12px 22px;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
 }
 .btn:hover:not(:disabled) {
   transform: translate(-2px, -2px);
@@ -173,8 +177,12 @@
   border: 2px solid var(--ink);
   background: var(--yellow);
 }
-.pill--done { background: var(--green); }
-.pill--failed { background: #ff8a80; }
+.pill--done {
+  background: var(--green);
+}
+.pill--failed {
+  background: #ff8a80;
+}
 
 .meter {
   width: 100%;
@@ -209,8 +217,12 @@
   padding: 10px 12px;
   font-size: 0.9rem;
 }
-.buckets li:nth-child(1) { background: var(--green); }
-.buckets li:nth-child(3) { background: var(--yellow); }
+.buckets li:nth-child(1) {
+  background: var(--green);
+}
+.buckets li:nth-child(3) {
+  background: var(--yellow);
+}
 .buckets b {
   display: block;
   font: 800 1.8rem var(--display);
@@ -231,7 +243,9 @@
   }
 }
 
-.card__ok--demo { background: var(--yellow); }
+.card__ok--demo {
+  background: var(--yellow);
+}
 
 /* the full report: SoundCloud title → what it became on Spotify */
 .report {
@@ -254,15 +268,36 @@
   font-size: 0.9rem;
 }
 .report__row--auto_confirmed,
-.report__row--user_confirmed { border-left-color: var(--green); }
+.report__row--user_confirmed {
+  border-left-color: var(--green);
+}
 .report__row--substituted,
-.report__row--needs_review { border-left-color: var(--yellow); }
-.report__row--unmatched { border-left-color: #ff8a80; }
-.report__row--skipped { border-left-color: #bbb; }
-.report__from { font-family: var(--mono); font-size: 0.8rem; overflow-wrap: anywhere; }
-.report__arrow { font: 800 1.1rem var(--display); }
-.report__to { font-weight: 600; overflow-wrap: anywhere; }
+.report__row--needs_review {
+  border-left-color: var(--yellow);
+}
+.report__row--unmatched {
+  border-left-color: #ff8a80;
+}
+.report__row--skipped {
+  border-left-color: #bbb;
+}
+.report__from {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.report__arrow {
+  font: 800 1.1rem var(--display);
+}
+.report__to {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 560px) {
-  .report__row { grid-template-columns: 1fr; }
-  .report__arrow { display: none; }
+  .report__row {
+    grid-template-columns: 1fr;
+  }
+  .report__arrow {
+    display: none;
+  }
 }

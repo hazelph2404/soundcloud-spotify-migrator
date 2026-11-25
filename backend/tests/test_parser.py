@@ -14,27 +14,37 @@ from app.services.parser import parse
 CASES = [
     (
         "Amindi K. Fro$t, Tessellated & Valleyz ~ Pine & Ginger",
-        "Film Noir Sound", "Film Noir Sound", 188,
+        "Film Noir Sound",
+        "Film Noir Sound",
+        188,
         {"title": "pine and ginger", "kind": "song", "version_tags": []},
     ),
     (
         "FKJ feat. Tom Bailey - Drops",
-        "FKJ", None, 241,
+        "FKJ",
+        None,
+        241,
         {"title": "drops", "kind": "song", "features": ["Tom Bailey"]},
     ),
     (
         "Jinsang - Egyptian Pools",
-        "Vitaboy", "JinSang", 130,
+        "Vitaboy",
+        "JinSang",
+        130,
         {"artist": "jinsang", "title": "egyptian pools", "kind": "song"},
     ),
     (
         "Masego - Isn't She Lovely",
-        "Artistic Manifesto", None, 182,
+        "Artistic Manifesto",
+        None,
+        182,
         {"title": "isnt she lovely", "kind": "song"},
     ),
     (
         "why dont we talk anymore",
-        "rage logic", "rage logic", 189,
+        "rage logic",
+        "rage logic",
+        189,
         {"title": "why dont we talk anymore", "kind": "song"},
     ),
 ]

@@ -81,7 +81,8 @@ export default function App() {
   }
 
   const running = !!migrationId && !(status && TERMINAL.includes(status.status))
-  const progress = status && status.progress.total ? status.progress.done / status.progress.total : 0
+  const progress =
+    status && status.progress.total ? status.progress.done / status.progress.total : 0
 
   return (
     <main className="room" style={{ '--p': progress } as CSSProperties}>
@@ -102,7 +103,9 @@ export default function App() {
           <button className="btn btn--big" onClick={realApi.connectSpotify} data-cursor="let me in">
             Connect Spotify
           </button>
-          <p className="card__small">You'll log in on Spotify's own page. This app never sees your password.</p>
+          <p className="card__small">
+            You'll log in on Spotify's own page. This app never sees your password.
+          </p>
         </section>
       ) : (
         <section className="card">
@@ -132,7 +135,8 @@ export default function App() {
       {status && (
         <section className="card result">
           <h2>
-            {status.source_name ?? 'Migration'} <span className={`pill pill--${status.status}`}>{status.status}</span>
+            {status.source_name ?? 'Migration'}{' '}
+            <span className={`pill pill--${status.status}`}>{status.status}</span>
           </h2>
           <div className="meter" aria-label="progress">
             <div className="meter__fill" style={{ transform: `scaleX(${progress})` }} />
@@ -141,21 +145,36 @@ export default function App() {
             {status.progress.done} / {status.progress.total} tracks
           </p>
           <ul className="buckets">
-            <li><b>{status.buckets.matched}</b> matched</li>
-            <li><b>{status.buckets.substituted}</b> matched (different version)</li>
-            <li><b>{status.buckets.review}</b> needs review</li>
-            <li><b>{status.buckets.unmatched}</b> not found</li>
-            <li><b>{status.buckets.skipped}</b> skipped (mix/podcast)</li>
+            <li>
+              <b>{status.buckets.matched}</b> matched
+            </li>
+            <li>
+              <b>{status.buckets.substituted}</b> matched (different version)
+            </li>
+            <li>
+              <b>{status.buckets.review}</b> needs review
+            </li>
+            <li>
+              <b>{status.buckets.unmatched}</b> not found
+            </li>
+            <li>
+              <b>{status.buckets.skipped}</b> skipped (mix/podcast)
+            </li>
           </ul>
-          {status.status === 'failed' && status.error && <p className="room__error">{status.error}</p>}
+          {status.status === 'failed' && status.error && (
+            <p className="room__error">{status.error}</p>
+          )}
           {items.length > 0 && (
             <ol className="report">
               {items.map((it) => {
-                const best = it.candidates.find((c) => c.uri === it.chosen_spotify_uri) ?? it.candidates[0]
+                const best =
+                  it.candidates.find((c) => c.uri === it.chosen_spotify_uri) ?? it.candidates[0]
                 return (
                   <li key={it.id} className={`report__row report__row--${it.match_status}`}>
                     <span className="report__from">{it.raw_title}</span>
-                    <span className="report__arrow" aria-hidden="true">→</span>
+                    <span className="report__arrow" aria-hidden="true">
+                      →
+                    </span>
                     <span className="report__to">
                       {it.chosen_spotify_uri && best
                         ? `${best.name} · ${best.artists.join(', ')}`
@@ -169,7 +188,12 @@ export default function App() {
             </ol>
           )}
           {status.target_playlist_url && (
-            <a className="btn btn--big" href={status.target_playlist_url} target="_blank" rel="noreferrer">
+            <a
+              className="btn btn--big"
+              href={status.target_playlist_url}
+              target="_blank"
+              rel="noreferrer"
+            >
               Open Spotify playlist →
             </a>
           )}

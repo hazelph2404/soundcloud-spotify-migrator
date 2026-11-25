@@ -36,8 +36,10 @@ export function Cursor() {
     const tick = () => {
       ring.x += (mouse.x - ring.x) * 0.16 // the ring trails behind the dot
       ring.y += (mouse.y - ring.y) * 0.16
-      if (dotRef.current) dotRef.current.style.transform = `translate3d(${mouse.x}px,${mouse.y}px,0)`
-      if (ringRef.current) ringRef.current.style.transform = `translate3d(${ring.x}px,${ring.y}px,0)`
+      if (dotRef.current)
+        dotRef.current.style.transform = `translate3d(${mouse.x}px,${mouse.y}px,0)`
+      if (ringRef.current)
+        ringRef.current.style.transform = `translate3d(${ring.x}px,${ring.y}px,0)`
       raf = requestAnimationFrame(tick)
     }
     window.addEventListener('pointermove', move)
@@ -54,7 +56,11 @@ export function Cursor() {
   // would be relative to that parent instead of the screen, and the cursor drifts away.
   return createPortal(
     <>
-      <div ref={ringRef} className={`cursor-ring ${label ? 'cursor-ring--label' : ''}`} aria-hidden="true">
+      <div
+        ref={ringRef}
+        className={`cursor-ring ${label ? 'cursor-ring--label' : ''}`}
+        aria-hidden="true"
+      >
         <span>{label}</span>
       </div>
       <div ref={dotRef} className="cursor-dot" aria-hidden="true" />
@@ -85,7 +91,11 @@ export function Preloader({ onDone }: { onDone: () => void }) {
   }, [onDone])
 
   return (
-    <div className={`preloader ${leaving ? 'preloader--leave' : ''}`} role="status" aria-label="Loading">
+    <div
+      className={`preloader ${leaving ? 'preloader--leave' : ''}`}
+      role="status"
+      aria-label="Loading"
+    >
       <p className="preloader__hand">brewing your decaf…</p>
       <p className="preloader__count">{String(count).padStart(3, '0')}</p>
       <div className="preloader__bar">
@@ -103,7 +113,11 @@ export function SplitText({ text, delay = 0 }: { text: string; delay?: number })
       {text.split(' ').map((word, w) => (
         <span key={w} className="split__word" aria-hidden="true">
           {[...word].map((ch) => (
-            <span key={i} className="split__char" style={{ animationDelay: `${delay + i++ * 28}ms` }}>
+            <span
+              key={i}
+              className="split__char"
+              style={{ animationDelay: `${delay + i++ * 28}ms` }}
+            >
               {ch}
             </span>
           ))}
