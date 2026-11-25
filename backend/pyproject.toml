@@ -33,9 +33,13 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
+# On top of Ruff's defaults: pycodestyle errors/warnings, bugbear (likely bugs),
+# and simplify (needlessly complex code).
+extend-select = ["E", "W", "B", "SIM"]
 # B008: FastAPI's Depends()-in-defaults is the intended pattern.
 # RUF012: ARQ's WorkerSettings uses plain class-attribute lists.
-ignore = ["B008", "RUF012"]
+# UP042: (str, Enum) -> StrEnum changes what str(member) returns; switch deliberately, not by lint.
+ignore = ["B008", "RUF012", "UP042"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
