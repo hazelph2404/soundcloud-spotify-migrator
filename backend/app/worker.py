@@ -54,6 +54,7 @@ COUNTER_FOR_STATUS = {
     MatchStatus.needs_review: "count_review",
     MatchStatus.unmatched: "count_unmatched",
     MatchStatus.skipped: "count_skipped",
+    MatchStatus.unavailable: "count_unavailable",
 }
 
 
@@ -133,9 +134,12 @@ async def _extract(db, migration: Migration) -> list[SourceItem]:
             raw_duration_sec=track.duration_sec,
             sc_url=track.sc_url,
             sc_track_id=track.sc_track_id,
+            unavailable_reason=track.error,
         )
         db.add(item)
         items.append(item)
+        if track.error:
+            _finish_item(migration, item, MatchStatus.unavailable)
     await db.commit()
     return items
 
@@ -146,6 +150,8 @@ async def _classify(
     """Parse every item. Returns the ones worth matching, paired with their parse."""
     songs = []
     for item in items:
+        if item.match_status == MatchStatus.unavailable:
+            continue
         parsed = parse(
             item.raw_title,
             uploader=item.raw_uploader,
