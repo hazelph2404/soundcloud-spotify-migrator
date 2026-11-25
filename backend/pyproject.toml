@@ -41,6 +41,11 @@ extend-select = ["E", "W", "B", "SIM"]
 # UP042: (str, Enum) -> StrEnum changes what str(member) returns; switch deliberately, not by lint.
 ignore = ["B008", "RUF012", "UP042"]
 
+[tool.ruff.lint.isort]
+# backend/alembic/ (the migrations folder) shadows the package name, so say
+# explicitly that `import alembic` is the third-party library.
+known-third-party = ["alembic"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
