@@ -43,7 +43,9 @@ async def callback(
 ) -> RedirectResponse:
     if error:
         return RedirectResponse(f"{settings.frontend_origin}/?auth_error={error}")
-    verifier = await _redis.get(state)
+    if state is None:
+        return RedirectResponse(f"{settings.frontend_origin}/?auth_error=invalid_state")
+    verifier = await _redis.getdel(state)
     if verifier is None:
         return RedirectResponse(f"{settings.frontend_origin}/?auth_error=invalid_state")
     try:
