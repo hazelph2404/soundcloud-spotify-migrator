@@ -38,7 +38,7 @@ class MigrationStatusOut(BaseModel):
 class ItemOut(BaseModel):
     id: str
     position: int
-    raw_title: str
+    raw_title: str | None
     raw_uploader: str | None
     raw_duration_sec: int | None
     sc_url: str | None
@@ -50,6 +50,7 @@ class ItemOut(BaseModel):
     chosen_spotify_uri: str | None
     confidence: float | None
     candidates: list[dict]
+    unavailable_reason: str | None  # why the track couldn't be loaded from SoundCloud
 
 
 class ItemsPage(BaseModel):

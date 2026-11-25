@@ -83,6 +83,7 @@ async def get_migration(
         "review": migration.count_review,
         "unmatched": migration.count_unmatched,
         "skipped": migration.count_skipped,
+        "unavailable": migration.count_unavailable,
     }
     error = migration.error
     return MigrationStatusOut(
@@ -100,7 +101,7 @@ async def get_migration(
 @router.get("/{migration_id}/items", response_model=ItemsPage)
 async def get_items(
     migration_id: str,
-    bucket: str | None = None,
+    bucket: MatchStatus | None = None,
     limit: int = 50,
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
@@ -113,27 +114,7 @@ async def get_items(
         stmt = stmt.where(SourceItem.match_status == bucket)
     stmt = stmt.order_by(SourceItem.position).limit(min(limit, 200))
     result = await db.execute(stmt)
-    rows = result.scalars().all()
-    items = [
-        ItemOut(
-            id=row.id,
-            position=row.position,
-            raw_title=row.raw_title,
-            raw_uploader=row.raw_uploader,
-            raw_duration_sec=row.raw_duration_sec,
-            sc_url=row.sc_url,
-            parsed_artist=row.parsed_artist,
-            parsed_title=row.parsed_title,
-            parsed_version_tags=row.parsed_version_tags,
-            kind=row.kind.value,
-            match_status=row.match_status.value,
-            chosen_spotify_uri=row.chosen_spotify_uri,
-            confidence=float(row.confidence) if row.confidence is not None else None,
-            candidates=row.candidates,
-        )
-        for row in rows
-    ]
-    return ItemsPage(items=items)
+    return ItemsPage(items=[_item_out(row) for row in result.scalars().all()])
 
 
 @router.patch("/{migration_id}/items/{item_id}", response_model=ItemOut)
@@ -153,6 +134,10 @@ async def choose_candidate(
     item = await db.get(SourceItem, item_id)
     if item is None or item.migration_id != migration_id:
         raise HTTPException(404, "item not found")
+    if item.match_status == MatchStatus.unavailable:
+        raise HTTPException(
+            409, "this track couldn't be loaded from SoundCloud, so there's nothing to choose"
+        )
 
     # 3. the choice must be one of the candidates (or None = no match)
     allowed = {c["uri"] for c in item.candidates}
@@ -178,19 +163,24 @@ async def choose_candidate(
 
     # 6. save and reply
     await db.commit()
+    return _item_out(item)
+
+
+def _item_out(row: SourceItem) -> ItemOut:
     return ItemOut(
-        id=item.id,
-        position=item.position,
-        raw_title=item.raw_title,
-        raw_uploader=item.raw_uploader,
-        raw_duration_sec=item.raw_duration_sec,
-        sc_url=item.sc_url,
-        parsed_artist=item.parsed_artist,
-        parsed_title=item.parsed_title,
-        parsed_version_tags=item.parsed_version_tags,
-        kind=item.kind.value,
-        match_status=item.match_status.value,
-        chosen_spotify_uri=item.chosen_spotify_uri,
-        confidence=float(item.confidence) if item.confidence is not None else None,
-        candidates=item.candidates,
+        id=row.id,
+        position=row.position,
+        raw_title=row.raw_title,
+        raw_uploader=row.raw_uploader,
+        raw_duration_sec=row.raw_duration_sec,
+        sc_url=row.sc_url,
+        parsed_artist=row.parsed_artist,
+        parsed_title=row.parsed_title,
+        parsed_version_tags=row.parsed_version_tags,
+        kind=row.kind.value,
+        match_status=row.match_status.value,
+        chosen_spotify_uri=row.chosen_spotify_uri,
+        confidence=float(row.confidence) if row.confidence is not None else None,
+        candidates=row.candidates,
+        unavailable_reason=row.unavailable_reason,
     )
