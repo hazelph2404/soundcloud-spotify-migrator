@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+
 from sqlalchemy import select
 
-from arq import create_pool
-from arq.connections import RedisSettings
-from fastapi import APIRouter, Cookie, Depends, HTTPException
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -41,11 +40,12 @@ async def current_user_id(hkd_session: str | None = Cookie(default=None)) -> str
 
 @router.post("", status_code=202, response_model=MigrationCreated)
 async def create_migration(
+    request: Request, 
     body: CreateMigration,
     user_id: str = Depends(current_user_id),
     db: AsyncSession = Depends(get_session),
 ) -> MigrationCreated:
-    
+    pool = request.app.state.arq
     source_type = SourceType(body.source)
     version_preference = VersionPreference(body.version_preference)
     
@@ -56,7 +56,6 @@ async def create_migration(
 
     db.add(migration)
     await db.commit()
-    pool = await create_pool(RedisSettings.from_dsn(settings.redis_url))
     await pool.enqueue_job("run_migration", migration.id)
     return MigrationCreated(id = migration.id, status=migration.status.value)
 
