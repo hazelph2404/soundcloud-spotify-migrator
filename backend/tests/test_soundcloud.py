@@ -95,3 +95,24 @@ async def test_drm_track_is_marked_with_a_reason():
     assert drm.error, "a failed track needs a reason the report can show"
     assert "DRM" in drm.error
     assert drm.sc_url == DRM_URL, "keep the link so the report can point at the track"
+
+
+@pytest.mark.parametrize(
+    ("raw", "clean"),
+    [
+        ("ERROR: [soundcloud] 2: This track is DRM protected", "This track is DRM protected"),
+        (
+            "ERROR: [soundcloud] Unable to download JSON metadata: HTTP Error 404: Not Found",
+            "Unable to download JSON metadata: HTTP Error 404: Not Found",
+        ),
+        ("ERROR: This track is private", "This track is private"),
+        ("something unexpected", "something unexpected"),
+    ],
+)
+def test_error_reason_is_cleaned_for_people(raw, clean):
+    assert soundcloud._clean_error(DownloadError(raw)) == clean
+
+
+async def test_drm_reason_is_readable():
+    playlist = await extract_playlist(PLAYLIST_URL)
+    assert playlist.tracks[1].error == "This track is DRM protected"

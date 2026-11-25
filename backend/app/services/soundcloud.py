@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass, field
 
 from yt_dlp import YoutubeDL
@@ -11,6 +12,17 @@ _YDL_OPTS = {
     "quiet": True,
     "extract_flat": False,
 }
+
+# yt-dlp's prefix on error messages: "ERROR: [soundcloud] 2: <message>". The extractor name
+# and the track id are optional, and the id never contains spaces, so a message that itself
+# has colons ("HTTP Error 404: Not Found") is left whole.
+_YDL_ERROR_PREFIX = re.compile(r"^ERROR:\s*(?:\[[^\]]*\]\s*)?(?:[\w-]+:\s+)?")
+
+
+def _clean_error(e: DownloadError) -> str:
+    """'ERROR: [soundcloud] 2: This track is DRM protected' -> 'This track is DRM protected'."""
+    message = _YDL_ERROR_PREFIX.sub("", str(e)).strip()
+    return message or str(e)
 
 
 @dataclass
@@ -59,7 +71,7 @@ def _extract_sync(url: str) -> RawPlaylist:
                         sc_artist=None,
                         duration_sec=None,
                         sc_url=entry["url"],
-                        error=str(e),
+                        error=_clean_error(e),
                     )
                 )
 
