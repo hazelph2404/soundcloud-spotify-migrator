@@ -19,6 +19,7 @@ export type MatchStatus =
   | 'user_confirmed'
   | 'unmatched'
   | 'skipped'
+  | 'unavailable'
 
 export type MigrationStatus = {
   id: string
@@ -32,6 +33,7 @@ export type MigrationStatus = {
     review: number
     unmatched: number
     skipped: number
+    unavailable: number
   }
   target_playlist_url: string | null
   error: string | null
@@ -50,7 +52,7 @@ export type Candidate = {
 export type Item = {
   id: string
   position: number
-  raw_title: string
+  raw_title: string | null
   raw_uploader: string | null
   raw_duration_sec: number | null
   sc_url: string | null
@@ -62,6 +64,7 @@ export type Item = {
   chosen_spotify_uri: string | null
   confidence: number | null
   candidates: Candidate[]
+  unavailable_reason: string | null
 }
 
 export const connectSpotify = () => {

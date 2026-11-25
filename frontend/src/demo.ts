@@ -63,6 +63,7 @@ export async function getMigration(): Promise<MigrationStatus> {
       review: count('needs_review'),
       unmatched: count('unmatched'),
       skipped: count('skipped'),
+      unavailable: count('unavailable'),
     },
     target_playlist_url: finished ? PLAYLIST_URL : null,
     error: null,
@@ -80,6 +81,7 @@ function item(
   confidence: number,
   name: string,
   artists: string[],
+  unavailable_reason: string | null = null,
 ): Item {
   const uri = `spotify:track:demo-${position}`
   return {
@@ -97,5 +99,6 @@ function item(
     chosen_spotify_uri: match_status === 'auto_confirmed' ? uri : null,
     confidence,
     candidates: [{ uri, name, artists, duration_sec: 0, score: confidence, version: 'match' }],
+    unavailable_reason,
   }
 }

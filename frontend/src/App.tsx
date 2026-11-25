@@ -8,14 +8,6 @@ import Hallway from './hallway/Hallway'
 import { Cursor, Preloader, SplitText } from './fx/fx'
 import { reducedMotion } from './fx/motion'
 
-/**
- * P0 UI — you walk down a hallway of old memories (Hallway), open the door, and the
- * app is the room behind it:
- *   1. "Connect Spotify" button
- *   2. a form: paste a public SoundCloud playlist URL -> start migration
- *   3. a poller that shows status + bucket counts while the worker runs
- * The room's color goes from orange (SoundCloud side) to green as tracks get matched.
- */
 const TERMINAL = ['done', 'failed']
 // Demo mode swaps the real API for a recorded run (see demo.ts), so the UI is identical.
 const api = DEMO ? demoApi : realApi
@@ -28,11 +20,9 @@ export default function App() {
   const [status, setStatus] = useState<MigrationStatus | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [error, setError] = useState<string | null>(params.get('auth_error'))
-  // Coming back from Spotify (success or error) lands you inside the room, not the hallway.
   const [entered, setEntered] = useState((connected && !DEMO) || error !== null)
   const [preloading, setPreloading] = useState(() => !entered && !reducedMotion())
 
-  // Poll while a migration is running.
   useEffect(() => {
     if (!migrationId) return
     const tick = async () => {
@@ -160,6 +150,9 @@ export default function App() {
             <li>
               <b>{status.buckets.skipped}</b> skipped (mix/podcast)
             </li>
+            <li>
+              <b>{status.buckets.unavailable}</b> couldn't be read from SoundCloud
+            </li>
           </ul>
           {status.status === 'failed' && status.error && (
             <p className="room__error">{status.error}</p>
@@ -171,16 +164,27 @@ export default function App() {
                   it.candidates.find((c) => c.uri === it.chosen_spotify_uri) ?? it.candidates[0]
                 return (
                   <li key={it.id} className={`report__row report__row--${it.match_status}`}>
-                    <span className="report__from">{it.raw_title}</span>
+                    <span className="report__from">
+                      {it.raw_title ??
+                        (it.sc_url ? (
+                          <a href={it.sc_url} target="_blank" rel="noreferrer">
+                            a SoundCloud track
+                          </a>
+                        ) : (
+                          'a SoundCloud track'
+                        ))}
+                    </span>
                     <span className="report__arrow" aria-hidden="true">
                       →
                     </span>
                     <span className="report__to">
-                      {it.chosen_spotify_uri && best
-                        ? `${best.name} · ${best.artists.join(', ')}`
-                        : best
-                          ? `not found (closest: ${best.name}, ${Math.round((it.confidence ?? 0) * 100)}%)`
-                          : 'not found'}
+                      {it.match_status === 'unavailable'
+                        ? `couldn't read it: ${it.unavailable_reason ?? 'unknown reason'}`
+                        : it.chosen_spotify_uri && best
+                          ? `${best.name} · ${best.artists.join(', ')}`
+                          : best
+                            ? `not found (closest: ${best.name}, ${Math.round((it.confidence ?? 0) * 100)}%)`
+                            : 'not found'}
                     </span>
                   </li>
                 )

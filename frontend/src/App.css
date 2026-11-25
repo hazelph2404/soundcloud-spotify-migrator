@@ -281,10 +281,23 @@
 .report__row--skipped {
   border-left-color: #bbb;
 }
+/* Never reached Spotify, so it gets SoundCloud's orange. */
+.report__row--unavailable {
+  border-left-color: var(--orange);
+}
 .report__from {
   font-family: var(--mono);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
+}
+.report__from a {
+  color: inherit;
+  text-decoration-color: var(--orange);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.report__from a:hover {
+  color: var(--orange);
 }
 .report__arrow {
   font: 800 1.1rem var(--display);
